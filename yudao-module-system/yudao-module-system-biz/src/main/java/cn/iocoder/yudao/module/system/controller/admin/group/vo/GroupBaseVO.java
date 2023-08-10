@@ -21,6 +21,10 @@ public class GroupBaseVO {
     @Schema(description = "描述", example = "你说的对")
     private String description;
 
+    @Schema(description = "分类", requiredMode = Schema.RequiredMode.REQUIRED, example = "24")
+    @NotNull(message = "分类不能为空")
+    private Integer category;
+
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
     @NotNull(message = "状态不能为空")
     private Byte status;

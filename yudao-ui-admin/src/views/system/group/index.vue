@@ -40,6 +40,7 @@
       <el-table-column label="编号" align="center" prop="id" />
       <el-table-column label="名字" align="center" prop="name" />
       <el-table-column label="描述" align="center" prop="description" />
+      <el-table-column label="分类" align="center" prop="category" />
       <el-table-column label="状态" align="center" prop="status">
         <template v-slot="scope">
           <dict-tag :type="DICT_TYPE.COMMON_STATUS" :value="scope.row.status" />
@@ -71,6 +72,9 @@
         </el-form-item>
         <el-form-item label="描述">
           <editor v-model="form.description" :min-height="192"/>
+        </el-form-item>
+        <el-form-item label="分类" prop="category">
+          <el-input v-model="form.category" placeholder="请输入分类" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态">
@@ -125,6 +129,7 @@ export default {
       // 表单校验
       rules: {
         name: [{ required: true, message: "名字不能为空", trigger: "blur" }],
+        category: [{ required: true, message: "分类不能为空", trigger: "blur" }],
         status: [{ required: true, message: "状态不能为空", trigger: "change" }],
       }
     };
@@ -154,6 +159,7 @@ export default {
         id: undefined,
         name: undefined,
         description: undefined,
+        category: undefined,
         status: undefined,
       };
       this.resetForm("form");

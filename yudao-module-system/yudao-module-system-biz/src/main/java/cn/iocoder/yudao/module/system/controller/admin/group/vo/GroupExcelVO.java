@@ -28,6 +28,9 @@ public class GroupExcelVO {
     @ExcelProperty("描述")
     private String description;
 
+    @ExcelProperty("分类")
+    private Integer category;
+
     @ExcelProperty(value = "状态", converter = DictConvert.class)
     @DictFormat("common_status") // TODO 代码优化：建议设置到对应的 XXXDictTypeConstants 枚举类中
     private Byte status;

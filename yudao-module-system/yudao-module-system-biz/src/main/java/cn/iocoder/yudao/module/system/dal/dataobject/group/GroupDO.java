@@ -36,10 +36,15 @@ public class GroupDO extends BaseDO {
      */
     private String description;
     /**
+     * 分类
+     */
+    private Integer category;
+    /**
      * 状态
      *
      * 枚举 {@link TODO common_status 对应的类}
      */
     private Byte status;
+
 
 }
