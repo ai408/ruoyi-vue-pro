@@ -4,8 +4,12 @@ import cn.iocoder.yudao.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import cn.iocoder.yudao.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
 import cn.iocoder.yudao.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import cn.iocoder.yudao.framework.pay.core.client.dto.refund.PayRefundUnifiedReqDTO;
+import cn.iocoder.yudao.framework.pay.core.client.dto.transfer.PayTransferRespDTO;
+import cn.iocoder.yudao.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
 import cn.iocoder.yudao.framework.pay.core.client.impl.AbstractPayClient;
+import cn.iocoder.yudao.framework.pay.core.client.impl.NonePayClientConfig;
 import cn.iocoder.yudao.framework.pay.core.enums.channel.PayChannelEnum;
+import cn.iocoder.yudao.framework.pay.core.enums.transfer.PayTransferTypeEnum;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -17,11 +21,11 @@ import java.util.Map;
  *
  * @author jason
  */
-public class MockPayClient extends AbstractPayClient<MockPayClientConfig> {
+public class MockPayClient extends AbstractPayClient<NonePayClientConfig> {
 
     private static final String MOCK_RESP_SUCCESS_DATA = "MOCK_SUCCESS";
 
-    public MockPayClient(Long channelId, MockPayClientConfig config) {
+    public MockPayClient(Long channelId, NonePayClientConfig config) {
         super(channelId, PayChannelEnum.MOCK.getCode(), config);
     }
 
@@ -61,6 +65,16 @@ public class MockPayClient extends AbstractPayClient<MockPayClientConfig> {
     @Override
     protected PayOrderRespDTO doParseOrderNotify(Map<String, String> params, String body) {
         throw new UnsupportedOperationException("模拟支付无支付回调");
+    }
+
+    @Override
+    protected PayTransferRespDTO doUnifiedTransfer(PayTransferUnifiedReqDTO reqDTO) {
+        throw new UnsupportedOperationException("待实现");
+    }
+
+    @Override
+    protected PayTransferRespDTO doGetTransfer(String outTradeNo, PayTransferTypeEnum type) {
+        throw new UnsupportedOperationException("待实现");
     }
 
 }

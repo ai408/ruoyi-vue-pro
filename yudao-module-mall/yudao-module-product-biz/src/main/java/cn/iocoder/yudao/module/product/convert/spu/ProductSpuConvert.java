@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.convert.spu;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
 import cn.iocoder.yudao.framework.dict.core.util.DictFrameworkUtils;
 import cn.iocoder.yudao.module.product.api.spu.dto.ProductSpuRespDTO;
 import cn.iocoder.yudao.module.product.controller.admin.spu.vo.*;
@@ -63,6 +64,8 @@ public interface ProductSpuConvert {
 
     ProductSpuDetailRespVO convert03(ProductSpuDO spu);
 
+    ProductSpuRespDTO convert02(ProductSpuDO bean);
+
     // ========== 用户 App 相关 ==========
 
     PageResult<AppProductSpuPageRespVO> convertPageForGetSpuPage(PageResult<ProductSpuDO> page);
@@ -76,11 +79,10 @@ public interface ProductSpuConvert {
             ProductSpuDO spu = list.get(i);
             AppProductSpuPageRespVO spuVO = voList.get(i);
             spuVO.setUnitName(DictFrameworkUtils.getDictDataLabel(DictTypeConstants.PRODUCT_UNIT, spu.getUnit()));
-            // 计算 vip 价格 TODO 芋艿：临时的逻辑，等 vip 支持后
-            spuVO.setVipPrice((int) (spuVO.getPrice() * 0.9));
         }
         return voList;
     }
+
     @Named("convertListForGetSpuList0")
     List<AppProductSpuPageRespVO> convertListForGetSpuList0(List<ProductSpuDO> list);
 
@@ -91,11 +93,6 @@ public interface ProductSpuConvert {
                 .setUnitName(DictFrameworkUtils.getDictDataLabel(DictTypeConstants.PRODUCT_UNIT, spu.getUnit()));
         // 处理 SKU
         spuVO.setSkus(convertListForGetSpuDetail(skus));
-        // 计算 vip 价格 TODO 芋艿：临时的逻辑，等 vip 支持后
-        if (true) {
-            spuVO.setVipPrice((int) (spuVO.getPrice() * 0.9));
-            spuVO.getSkus().forEach(sku -> sku.setVipPrice((int) (sku.getPrice() * 0.9)));
-        }
         return spuVO;
     }
 
@@ -104,21 +101,13 @@ public interface ProductSpuConvert {
     List<AppProductSpuDetailRespVO.Sku> convertListForGetSpuDetail(List<ProductSkuDO> skus);
 
     default ProductSpuDetailRespVO convertForSpuDetailRespVO(ProductSpuDO spu, List<ProductSkuDO> skus) {
-        ProductSpuDetailRespVO detailRespVO = convert03(spu);
-        detailRespVO.setSkus(ProductSkuConvert.INSTANCE.convertList(skus));
-        return detailRespVO;
+        return convert03(spu).setSkus(ProductSkuConvert.INSTANCE.convertList(skus));
     }
 
     default List<ProductSpuDetailRespVO> convertForSpuDetailRespListVO(List<ProductSpuDO> spus, List<ProductSkuDO> skus) {
-        List<ProductSpuDetailRespVO> vos = new ArrayList<>(spus.size());
         Map<Long, List<ProductSkuDO>> skuMultiMap = convertMultiMap(skus, ProductSkuDO::getSpuId);
-        // TODO @puhui999：可以直接使用 CollUtils.convertList
-        spus.forEach(spu -> {
-            ProductSpuDetailRespVO detailRespVO = convert03(spu);
-            detailRespVO.setSkus(ProductSkuConvert.INSTANCE.convertList(skuMultiMap.get(spu.getId())));
-            vos.add(detailRespVO);
-        });
-        return vos;
+        return CollectionUtils.convertList(spus, spu -> convert03(spu)
+                .setSkus(ProductSkuConvert.INSTANCE.convertList(skuMultiMap.get(spu.getId()))));
     }
 
 }

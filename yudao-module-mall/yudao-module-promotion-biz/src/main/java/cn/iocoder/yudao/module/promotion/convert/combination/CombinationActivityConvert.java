@@ -1,31 +1,40 @@
 package cn.iocoder.yudao.module.promotion.convert.combination;
 
-import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
+import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
+import cn.iocoder.yudao.framework.common.util.collection.MapUtils;
+import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
+import cn.iocoder.yudao.module.product.api.sku.dto.ProductSkuRespDTO;
 import cn.iocoder.yudao.module.product.api.spu.dto.ProductSpuRespDTO;
-import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordReqDTO;
+import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordCreateReqDTO;
+import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordCreateRespDTO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityCreateReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityExcelVO;
+import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityPageItemRespVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityRespVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityUpdateReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.product.CombinationProductBaseVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.product.CombinationProductRespVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.product.CombinationProductUpdateReqVO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationActivityDO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationProductDO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationRecordDO;
+import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.recrod.CombinationRecordPageItemRespVO;
+import cn.iocoder.yudao.module.promotion.controller.app.combination.vo.activity.AppCombinationActivityDetailRespVO;
+import cn.iocoder.yudao.module.promotion.controller.app.combination.vo.activity.AppCombinationActivityRespVO;
+import cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record.AppCombinationRecordDetailRespVO;
+import cn.iocoder.yudao.module.promotion.controller.app.combination.vo.record.AppCombinationRecordRespVO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationActivityDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationProductDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationRecordDO;
+import cn.iocoder.yudao.module.promotion.enums.combination.CombinationRecordStatusEnum;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
-import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertMap;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.*;
+import static cn.iocoder.yudao.framework.common.util.collection.MapUtils.findAndThen;
 
 /**
  * 拼团活动 Convert
@@ -37,102 +46,184 @@ public interface CombinationActivityConvert {
 
     CombinationActivityConvert INSTANCE = Mappers.getMapper(CombinationActivityConvert.class);
 
-    @Mappings({
-            @Mapping(target = "startTime", expression = "java(bean.getActivityTime()[0])"),
-            @Mapping(target = "endTime", expression = "java(bean.getActivityTime()[1])")
-    })
     CombinationActivityDO convert(CombinationActivityCreateReqVO bean);
 
-    @Mappings({
-            @Mapping(target = "startTime", expression = "java(bean.getActivityTime()[0])"),
-            @Mapping(target = "endTime", expression = "java(bean.getActivityTime()[1])")
-    })
     CombinationActivityDO convert(CombinationActivityUpdateReqVO bean);
 
-    @Named("mergeTime")
-    default LocalDateTime[] mergeTime(LocalDateTime startTime, LocalDateTime endTime) {
-        // TODO 有点怪第一次这样写 hh
-        LocalDateTime[] localDateTime = new LocalDateTime[2];
-        localDateTime[0] = startTime;
-        localDateTime[1] = endTime;
-        return localDateTime;
-    }
-
-    @Mappings({
-            @Mapping(target = "activityTime", expression = "java(mergeTime(bean.getStartTime(),bean.getEndTime()))")
-    })
     CombinationActivityRespVO convert(CombinationActivityDO bean);
 
     CombinationProductRespVO convert(CombinationProductDO bean);
 
-    default CombinationActivityRespVO convert(CombinationActivityDO bean, List<CombinationProductDO> productDOs) {
-        CombinationActivityRespVO respVO = convert(bean);
-        respVO.setProducts(convertList2(productDOs));
-        return respVO;
+    default CombinationActivityRespVO convert(CombinationActivityDO activity, List<CombinationProductDO> products) {
+        return convert(activity).setProducts(convertList2(products));
     }
 
     List<CombinationActivityRespVO> convertList(List<CombinationActivityDO> list);
 
-    PageResult<CombinationActivityRespVO> convertPage(PageResult<CombinationActivityDO> page);
 
-    default PageResult<CombinationActivityRespVO> convertPage(PageResult<CombinationActivityDO> page,
-                                                              List<CombinationProductDO> productList,
-                                                              List<ProductSpuRespDTO> spuList) {
-        // TODO @puhui999：c -> c 可以去掉哈
-        Map<Long, ProductSpuRespDTO> spuMap = convertMap(spuList, ProductSpuRespDTO::getId, c -> c);
-        PageResult<CombinationActivityRespVO> pageResult = convertPage(page);
+    default PageResult<CombinationActivityPageItemRespVO> convertPage(PageResult<CombinationActivityDO> page,
+                                                                      List<CombinationProductDO> productList,
+                                                                      Map<Long, Integer> groupCountMap,
+                                                                      Map<Long, Integer> groupSuccessCountMap,
+                                                                      Map<Long, Integer> recordCountMap,
+                                                                      List<ProductSpuRespDTO> spuList) {
+        PageResult<CombinationActivityPageItemRespVO> pageResult = convertPage(page);
+        Map<Long, ProductSpuRespDTO> spuMap = convertMap(spuList, ProductSpuRespDTO::getId);
         pageResult.getList().forEach(item -> {
-            // TODO @puhui999：最好 MapUtils.findAndThen，万一没找到呢，啊哈哈。
-            item.setSpuName(spuMap.get(item.getSpuId()).getName());
-            item.setPicUrl(spuMap.get(item.getSpuId()).getPicUrl());
+            MapUtils.findAndThen(spuMap, item.getSpuId(), spu -> item.setSpuName(spu.getName()).setPicUrl(spu.getPicUrl())
+                    .setMarketPrice(spu.getMarketPrice()));
             item.setProducts(convertList2(productList));
+            // 设置统计字段
+            item.setGroupCount(groupCountMap.getOrDefault(item.getId(), 0))
+                    .setGroupSuccessCount(groupSuccessCountMap.getOrDefault(item.getId(), 0))
+                    .setRecordCount(recordCountMap.getOrDefault(item.getId(), 0));
         });
         return pageResult;
     }
 
-    List<CombinationProductRespVO> convertList2(List<CombinationProductDO> productDOs);
+    PageResult<CombinationActivityPageItemRespVO> convertPage(PageResult<CombinationActivityDO> page);
 
-    List<CombinationActivityExcelVO> convertList02(List<CombinationActivityDO> list);
+    List<CombinationProductRespVO> convertList2(List<CombinationProductDO> productDOs);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
-            @Mapping(target = "activityId", source = "activityDO.id"),
-            @Mapping(target = "spuId", source = "activityDO.spuId"),
-            @Mapping(target = "skuId", source = "vo.skuId"),
-            @Mapping(target = "activePrice", source = "vo.activePrice"),
-            @Mapping(target = "activityStartTime", source = "activityDO.startTime"),
-            @Mapping(target = "activityEndTime", source = "activityDO.endTime")
+            @Mapping(target = "activityId", source = "activity.id"),
+            @Mapping(target = "spuId", source = "activity.spuId"),
+            @Mapping(target = "skuId", source = "product.skuId"),
+            @Mapping(target = "combinationPrice", source = "product.combinationPrice"),
+            @Mapping(target = "activityStartTime", source = "activity.startTime"),
+            @Mapping(target = "activityEndTime", source = "activity.endTime")
     })
-    CombinationProductDO convert(CombinationActivityDO activityDO, CombinationProductBaseVO vo);
+    CombinationProductDO convert(CombinationActivityDO activity, CombinationProductBaseVO product);
 
-    default List<CombinationProductDO> convertList(CombinationActivityDO activityDO, List<? extends CombinationProductBaseVO> products) {
-        List<CombinationProductDO> list = new ArrayList<>();
-        products.forEach(sku -> {
-            CombinationProductDO productDO = convert(activityDO, sku);
-            // TODO 状态设置
-            productDO.setActivityStatus(CommonStatusEnum.ENABLE.getStatus());
-            list.add(productDO);
-        });
-        return list;
+    default List<CombinationProductDO> convertList(List<? extends CombinationProductBaseVO> products, CombinationActivityDO activity) {
+        return CollectionUtils.convertList(products, item -> convert(activity, item).setActivityStatus(activity.getStatus()));
     }
 
-    // TODO @puhui999：这个方法的参数，调整成 productDOs、vos、activityDO；因为 productDOs 是主角；
-    // 然后，这个方法，感觉不是为了 convert，而是为了补全；
-    default List<CombinationProductDO> convertList1(CombinationActivityDO activityDO,
-                                                    List<CombinationProductUpdateReqVO> vos,
-                                                    List<CombinationProductDO> productDOs) {
-        Map<Long, Long> longMap = convertMap(productDOs, CombinationProductDO::getSkuId, CombinationProductDO::getId);
-        List<CombinationProductDO> list = new ArrayList<>();
-        vos.forEach(sku -> {
-            CombinationProductDO productDO = convert(activityDO, sku);
-            productDO.setId(longMap.get(sku.getSkuId()));
-            // TODO @puhui999：是是不是用 activityDO 的状态；
-            productDO.setActivityStatus(CommonStatusEnum.ENABLE.getStatus());
-            list.add(productDO);
-        });
-        return list;
+    default List<CombinationProductDO> convertList(List<CombinationProductBaseVO> updateProductVOs,
+                                                   List<CombinationProductDO> products, CombinationActivityDO activity) {
+        Map<Long, Long> productMap = convertMap(products, CombinationProductDO::getSkuId, CombinationProductDO::getId);
+        return CollectionUtils.convertList(updateProductVOs, updateProductVO -> convert(activity, updateProductVO)
+                .setId(productMap.get(updateProductVO.getSkuId()))
+                .setActivityStatus(activity.getStatus()));
     }
 
-    CombinationRecordDO convert(CombinationRecordReqDTO reqDTO);
+    CombinationRecordDO convert(CombinationRecordCreateReqDTO reqDTO);
+
+    default CombinationRecordCreateRespDTO convert4(CombinationRecordDO combinationRecord) {
+        return new CombinationRecordCreateRespDTO().setCombinationActivityId(combinationRecord.getActivityId())
+                .setCombinationRecordId(combinationRecord.getId()).setCombinationHeadId(combinationRecord.getHeadId());
+    }
+
+    default CombinationRecordDO convert(CombinationRecordCreateReqDTO reqDTO,
+                                        CombinationActivityDO activity, MemberUserRespDTO user,
+                                        ProductSpuRespDTO spu, ProductSkuRespDTO sku) {
+        return convert(reqDTO).setVirtualGroup(false)
+                .setStatus(CombinationRecordStatusEnum.IN_PROGRESS.getStatus()) // 创建后默认状态为进行中
+                .setUserSize(activity.getUserSize()).setUserCount(1) // 默认就是 1 插入后会接着更新一次所有的拼团记录
+                // 用户信息
+                .setNickname(user.getNickname()).setAvatar(user.getAvatar())
+                // 商品信息
+                .setSpuName(spu.getName()).setPicUrl(sku.getPicUrl());
+
+    }
+
+    List<AppCombinationActivityRespVO> convertAppList(List<CombinationActivityDO> list);
+
+    default List<AppCombinationActivityRespVO> convertAppList(List<CombinationActivityDO> list,
+                                                              List<CombinationProductDO> productList,
+                                                              List<ProductSpuRespDTO> spuList) {
+        List<AppCombinationActivityRespVO> activityList = convertAppList(list);
+        Map<Long, ProductSpuRespDTO> spuMap = convertMap(spuList, ProductSpuRespDTO::getId);
+        Map<Long, List<CombinationProductDO>> productMap = convertMultiMap(productList, CombinationProductDO::getActivityId);
+        return CollectionUtils.convertList(activityList, item -> {
+            // 设置 product 信息
+            item.setCombinationPrice(getMinValue(productMap.get(item.getId()), CombinationProductDO::getCombinationPrice));
+            // 设置 SPU 信息
+            findAndThen(spuMap, item.getSpuId(), spu -> item.setPicUrl(spu.getPicUrl()).setMarketPrice(spu.getMarketPrice()));
+            return item;
+        });
+    }
+
+    PageResult<AppCombinationActivityRespVO> convertAppPage(PageResult<CombinationActivityDO> result);
+
+    default PageResult<AppCombinationActivityRespVO> convertAppPage(PageResult<CombinationActivityDO> result,
+                                                                    List<CombinationProductDO> productList,
+                                                                    List<ProductSpuRespDTO> spuList) {
+        PageResult<AppCombinationActivityRespVO> appPage = convertAppPage(result);
+        Map<Long, ProductSpuRespDTO> spuMap = convertMap(spuList, ProductSpuRespDTO::getId);
+        Map<Long, List<CombinationProductDO>> productMap = convertMultiMap(productList, CombinationProductDO::getActivityId);
+        List<AppCombinationActivityRespVO> list = CollectionUtils.convertList(appPage.getList(), item -> {
+            // 设置 product 信息
+            item.setCombinationPrice(getMinValue(productMap.get(item.getId()), CombinationProductDO::getCombinationPrice));
+            // 设置 SPU 信息
+            findAndThen(spuMap, item.getSpuId(), spu -> item.setPicUrl(spu.getPicUrl()).setMarketPrice(spu.getMarketPrice()));
+            return item;
+        });
+        appPage.setList(list);
+        return appPage;
+    }
+
+    AppCombinationActivityDetailRespVO convert2(CombinationActivityDO combinationActivity);
+
+    List<AppCombinationActivityDetailRespVO.Product> convertList1(List<CombinationProductDO> products);
+
+    default AppCombinationActivityDetailRespVO convert3(CombinationActivityDO combinationActivity, List<CombinationProductDO> products) {
+        return convert2(combinationActivity).setProducts(convertList1(products));
+    }
+
+    List<AppCombinationRecordRespVO> convertList3(List<CombinationRecordDO> records);
+
+    AppCombinationRecordRespVO convert(CombinationRecordDO record);
+
+    PageResult<CombinationRecordPageItemRespVO> convert(PageResult<CombinationRecordDO> result);
+
+    default PageResult<CombinationRecordPageItemRespVO> convert(PageResult<CombinationRecordDO> recordPage, List<CombinationActivityDO> activities, List<CombinationProductDO> products) {
+        PageResult<CombinationRecordPageItemRespVO> result = convert(recordPage);
+        // 拼接关联属性
+        Map<Long, CombinationActivityDO> activityMap = convertMap(activities, CombinationActivityDO::getId);
+        Map<Long, List<CombinationProductDO>> productsMap = convertMultiMap(products, CombinationProductDO::getActivityId);
+        result.setList(CollectionUtils.convertList(result.getList(), item -> {
+            findAndThen(activityMap, item.getActivityId(), activity -> {
+                item.setActivity(convert(activity).setProducts(convertList2(productsMap.get(item.getActivityId()))));
+            });
+            return item;
+        }));
+        return result;
+    }
+
+    default AppCombinationRecordDetailRespVO convert(Long userId, CombinationRecordDO headRecord, List<CombinationRecordDO> memberRecords) {
+        AppCombinationRecordDetailRespVO respVO = new AppCombinationRecordDetailRespVO()
+                .setHeadRecord(convert(headRecord)).setMemberRecords(convertList3(memberRecords));
+        // 处理自己参与拼团的 orderId
+        CombinationRecordDO userRecord = CollectionUtils.findFirst(memberRecords, r -> ObjectUtil.equal(r.getUserId(), userId));
+        if (userRecord == null && ObjectUtil.equal(headRecord.getUserId(), userId)) {
+            userRecord = headRecord;
+        }
+        respVO.setOrderId(userRecord == null ? null : userRecord.getOrderId());
+        return respVO;
+    }
+
+    /**
+     * 转换生成虚拟成团虚拟记录
+     *
+     * @param headRecord 虚拟成团团长记录
+     * @return 虚拟记录列表
+     */
+    default List<CombinationRecordDO> convertVirtualRecordList(CombinationRecordDO headRecord) {
+        int count = headRecord.getUserSize() - headRecord.getUserCount();
+        List<CombinationRecordDO> createRecords = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            // 基础信息和团长保持一致
+            CombinationRecordDO newRecord = convert5(headRecord);
+            // 虚拟信息
+            newRecord.setCount(0) // 会单独更新下，在后续的 Service 逻辑里
+                    .setUserId(0L).setNickname("").setAvatar("").setOrderId(0L);
+            createRecords.add(newRecord);
+        }
+        return createRecords;
+    }
+    @Mapping(target = "id", ignore = true)
+    CombinationRecordDO convert5(CombinationRecordDO headRecord);
 
 }

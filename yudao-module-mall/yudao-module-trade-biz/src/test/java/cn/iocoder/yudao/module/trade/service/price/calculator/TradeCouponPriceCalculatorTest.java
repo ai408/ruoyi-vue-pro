@@ -7,6 +7,7 @@ import cn.iocoder.yudao.module.promotion.api.coupon.dto.CouponValidReqDTO;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionDiscountTypeEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionProductScopeEnum;
 import cn.iocoder.yudao.module.promotion.enums.common.PromotionTypeEnum;
+import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateReqBO;
 import cn.iocoder.yudao.module.trade.service.price.bo.TradePriceCalculateRespBO;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ public class TradeCouponPriceCalculatorTest extends BaseMockitoUnitTest {
                         new TradePriceCalculateReqBO.Item().setSkuId(40L).setCount(5).setSelected(false) // 匹配优惠劵，但是未选中
                     ));
         TradePriceCalculateRespBO result = new TradePriceCalculateRespBO()
+                .setType(TradeOrderTypeEnum.NORMAL.getType())
                 .setPrice(new TradePriceCalculateRespBO.Price())
                 .setPromotions(new ArrayList<>())
                 .setItems(asList(
@@ -65,7 +67,7 @@ public class TradeCouponPriceCalculatorTest extends BaseMockitoUnitTest {
 
         // mock 方法（优惠劵 Coupon 信息）
         CouponRespDTO coupon = randomPojo(CouponRespDTO.class, o -> o.setId(1024L).setName("程序员节")
-                .setProductScope(PromotionProductScopeEnum.SPU.getScope()).setProductSpuIds(asList(1L, 2L))
+                .setProductScope(PromotionProductScopeEnum.SPU.getScope()).setProductScopeValues(asList(1L, 2L))
                 .setUsePrice(350).setDiscountType(PromotionDiscountTypeEnum.PERCENT.getType())
                 .setDiscountPercent(50).setDiscountLimitPrice(70));
         when(couponApi.validateCoupon(eq(new CouponValidReqDTO().setId(1024L).setUserId(233L)))).thenReturn(coupon);

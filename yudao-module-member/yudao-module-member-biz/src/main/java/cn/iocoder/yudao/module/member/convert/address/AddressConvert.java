@@ -1,7 +1,8 @@
 package cn.iocoder.yudao.module.member.convert.address;
 
 import cn.iocoder.yudao.framework.ip.core.utils.AreaUtils;
-import cn.iocoder.yudao.module.member.api.address.dto.AddressRespDTO;
+import cn.iocoder.yudao.module.member.api.address.dto.MemberAddressRespDTO;
+import cn.iocoder.yudao.module.member.controller.admin.address.vo.AddressRespVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressCreateReqVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressRespVO;
 import cn.iocoder.yudao.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
@@ -32,11 +33,13 @@ public interface AddressConvert {
 
     List<AppAddressRespVO> convertList(List<MemberAddressDO> list);
 
-    AddressRespDTO convert02(MemberAddressDO bean);
+    MemberAddressRespDTO convert02(MemberAddressDO bean);
 
     @Named("convertAreaIdToAreaName")
     default String convertAreaIdToAreaName(Integer areaId) {
         return AreaUtils.format(areaId);
     }
+
+    List<AddressRespVO> convertList2(List<MemberAddressDO> list);
 
 }

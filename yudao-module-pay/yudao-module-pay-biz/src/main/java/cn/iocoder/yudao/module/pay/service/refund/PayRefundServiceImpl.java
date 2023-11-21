@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.pay.core.client.PayClient;
-import cn.iocoder.yudao.framework.pay.core.client.PayClientFactory;
 import cn.iocoder.yudao.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import cn.iocoder.yudao.framework.pay.core.client.dto.refund.PayRefundUnifiedReqDTO;
 import cn.iocoder.yudao.framework.pay.core.enums.refund.PayRefundStatusRespEnum;
@@ -53,9 +52,6 @@ public class PayRefundServiceImpl implements PayRefundService {
     private PayProperties payProperties;
 
     @Resource
-    private PayClientFactory payClientFactory;
-
-    @Resource
     private PayRefundMapper refundMapper;
     @Resource
     private PayNoRedisDAO noRedisDAO;
@@ -72,6 +68,11 @@ public class PayRefundServiceImpl implements PayRefundService {
     @Override
     public PayRefundDO getRefund(Long id) {
         return refundMapper.selectById(id);
+    }
+
+    @Override
+    public PayRefundDO getRefundByNo(String no) {
+        return refundMapper.selectByNo(no);
     }
 
     @Override
@@ -97,7 +98,7 @@ public class PayRefundServiceImpl implements PayRefundService {
         PayOrderDO order = validatePayOrderCanRefund(reqDTO);
         // 1.3 校验支付渠道是否有效
         PayChannelDO channel = channelService.validPayChannel(order.getChannelId());
-        PayClient client = payClientFactory.getPayClient(channel.getId());
+        PayClient client = channelService.getPayClient(channel.getId());
         if (client == null) {
             log.error("[refund][渠道编号({}) 找不到对应的支付客户端]", channel.getId());
             throw exception(CHANNEL_NOT_FOUND);
@@ -155,11 +156,11 @@ public class PayRefundServiceImpl implements PayRefundService {
     private PayOrderDO validatePayOrderCanRefund(PayRefundCreateReqDTO reqDTO) {
         PayOrderDO order = orderService.getOrder(reqDTO.getAppId(), reqDTO.getMerchantOrderId());
         if (order == null) {
-            throw exception(ORDER_NOT_FOUND);
+            throw exception(PAY_ORDER_NOT_FOUND);
         }
         // 校验状态，必须是已支付、或者已退款
         if (!PayOrderStatusEnum.isSuccessOrRefund(order.getStatus())) {
-            throw exception(ORDER_REFUND_FAIL_STATUS_ERROR);
+            throw exception(PAY_ORDER_REFUND_FAIL_STATUS_ERROR);
         }
 
         // 校验金额，退款金额不能大于原定的金额
@@ -300,7 +301,7 @@ public class PayRefundServiceImpl implements PayRefundService {
     private boolean syncRefund(PayRefundDO refund) {
         try {
             // 1.1 查询退款订单信息
-            PayClient payClient = payClientFactory.getPayClient(refund.getChannelId());
+            PayClient payClient = channelService.getPayClient(refund.getChannelId());
             if (payClient == null) {
                 log.error("[syncRefund][渠道编号({}) 找不到对应的支付客户端]", refund.getChannelId());
                 return false;

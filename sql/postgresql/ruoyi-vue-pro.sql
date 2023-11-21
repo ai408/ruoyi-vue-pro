@@ -2587,7 +2587,7 @@ INSERT INTO "qrtz_job_details" ("sched_name", "job_name", "job_group", "descript
                                 "is_nonconcurrent", "is_update_data", "requests_recovery", "job_data")
 VALUES ('schedulerName', 'userSessionTimeoutJob', 'DEFAULT', NULL,
         'cn.iocoder.yudao.framework.quartz.core.handler.JobHandlerInvoker', 'f', 't', 't', 'f',
-        E '\\254\\355\\000\\005sr\\000\\025org.quartz.JobDataMap\\237\\260\\203\\350\\277\\251\\260\\313\\002\\000\\000xr\\000&org.quartz.utils.StringKeyDirtyFlagMap\\202\\010\\350\\303\\373\\305](\\002\\000\\001Z\\000\\023allowsTransientDataxr\\000\\035org.quartz.utils.DirtyFlagMap\\023\\346.\\255(v\\012\\316\\002\\000\\002Z\\000\\005dirtyL\\000\\003mapt\\000\\017Ljava/util/Map;xp\\001sr\\000\\021java.util.HashMap\\005\\007\\332\\301\\303\\026`\\321\\003\\000\\002F\\000\\012loadFactorI\\000\\011thresholdxp?@\\000\\000\\000\\000\\000\\014w\\010\\000\\000\\000\\020\\000\\000\\000\\002t\\000\\006JOB_IDsr\\000\\016java.lang.Long;\\213\\344\\220\\314\\217#\\337\\002\\000\\001J\\000\\005valuexr\\000\\020java.lang.Number\\206\\254\\225\\035\\013\\224\\340\\213\\002\\000\\000xp\\000\\000\\000\\000\\000\\000\\000\\002t\\000\\020JOB_HANDLER_NAMEt\\000\\025userSessionTimeoutJobx\\000');
+         '\\254\\355\\000\\005sr\\000\\025org.quartz.JobDataMap\\237\\260\\203\\350\\277\\251\\260\\313\\002\\000\\000xr\\000&org.quartz.utils.StringKeyDirtyFlagMap\\202\\010\\350\\303\\373\\305](\\002\\000\\001Z\\000\\023allowsTransientDataxr\\000\\035org.quartz.utils.DirtyFlagMap\\023\\346.\\255(v\\012\\316\\002\\000\\002Z\\000\\005dirtyL\\000\\003mapt\\000\\017Ljava/util/Map;xp\\001sr\\000\\021java.util.HashMap\\005\\007\\332\\301\\303\\026`\\321\\003\\000\\002F\\000\\012loadFactorI\\000\\011thresholdxp?@\\000\\000\\000\\000\\000\\014w\\010\\000\\000\\000\\020\\000\\000\\000\\002t\\000\\006JOB_IDsr\\000\\016java.lang.Long;\\213\\344\\220\\314\\217#\\337\\002\\000\\001J\\000\\005valuexr\\000\\020java.lang.Number\\206\\254\\225\\035\\013\\224\\340\\213\\002\\000\\000xp\\000\\000\\000\\000\\000\\000\\000\\002t\\000\\020JOB_HANDLER_NAMEt\\000\\025userSessionTimeoutJobx\\000');
 COMMIT;
 
 -- ----------------------------
@@ -2733,7 +2733,7 @@ INSERT INTO "qrtz_triggers" ("sched_name", "trigger_name", "trigger_group", "job
                              "start_time", "end_time", "calendar_name", "misfire_instr", "job_data")
 VALUES ('schedulerName', 'userSessionTimeoutJob', 'DEFAULT', 'userSessionTimeoutJob', 'DEFAULT', NULL, 1651328700000,
         1651328640000, 5, 'WAITING', 'CRON', 1651328526000, 0, NULL, 0,
-        E '\\254\\355\\000\\005sr\\000\\025org.quartz.JobDataMap\\237\\260\\203\\350\\277\\251\\260\\313\\002\\000\\000xr\\000&org.quartz.utils.StringKeyDirtyFlagMap\\202\\010\\350\\303\\373\\305](\\002\\000\\001Z\\000\\023allowsTransientDataxr\\000\\035org.quartz.utils.DirtyFlagMap\\023\\346.\\255(v\\012\\316\\002\\000\\002Z\\000\\005dirtyL\\000\\003mapt\\000\\017Ljava/util/Map;xp\\001sr\\000\\021java.util.HashMap\\005\\007\\332\\301\\303\\026`\\321\\003\\000\\002F\\000\\012loadFactorI\\000\\011thresholdxp?@\\000\\000\\000\\000\\000\\014w\\010\\000\\000\\000\\020\\000\\000\\000\\003t\\000\\021JOB_HANDLER_PARAMpt\\000\\022JOB_RETRY_INTERVALsr\\000\\021java.lang.Integer\\022\\342\\240\\244\\367\\201\\2078\\002\\000\\001I\\000\\005valuexr\\000\\020java.lang.Number\\206\\254\\225\\035\\013\\224\\340\\213\\002\\000\\000xp\\000\\000\\007\\320t\\000\\017JOB_RETRY_COUNTsq\\000~\\000\\011\\000\\000\\000\\003x\\000');
+         '\\254\\355\\000\\005sr\\000\\025org.quartz.JobDataMap\\237\\260\\203\\350\\277\\251\\260\\313\\002\\000\\000xr\\000&org.quartz.utils.StringKeyDirtyFlagMap\\202\\010\\350\\303\\373\\305](\\002\\000\\001Z\\000\\023allowsTransientDataxr\\000\\035org.quartz.utils.DirtyFlagMap\\023\\346.\\255(v\\012\\316\\002\\000\\002Z\\000\\005dirtyL\\000\\003mapt\\000\\017Ljava/util/Map;xp\\001sr\\000\\021java.util.HashMap\\005\\007\\332\\301\\303\\026`\\321\\003\\000\\002F\\000\\012loadFactorI\\000\\011thresholdxp?@\\000\\000\\000\\000\\000\\014w\\010\\000\\000\\000\\020\\000\\000\\000\\003t\\000\\021JOB_HANDLER_PARAMpt\\000\\022JOB_RETRY_INTERVALsr\\000\\021java.lang.Integer\\022\\342\\240\\244\\367\\201\\2078\\002\\000\\001I\\000\\005valuexr\\000\\020java.lang.Number\\206\\254\\225\\035\\013\\224\\340\\213\\002\\000\\000xp\\000\\000\\007\\320t\\000\\017JOB_RETRY_COUNTsq\\000~\\000\\011\\000\\000\\000\\003x\\000');
 COMMIT;
 
 -- ----------------------------
@@ -6779,7 +6779,7 @@ CREATE TABLE "system_tenant"
     "contact_name"    varchar(30) COLLATE "pg_catalog"."default" NOT NULL,
     "contact_mobile"  varchar(500) COLLATE "pg_catalog"."default",
     "status"          int2                                       NOT NULL,
-    "domain"          varchar(256) COLLATE "pg_catalog"."default",
+    "website"          varchar(256) COLLATE "pg_catalog"."default",
     "package_id"      int8                                       NOT NULL,
     "expire_time"     timestamp(6)                               NOT NULL,
     "account_count"   int4                                       NOT NULL,
@@ -6803,7 +6803,7 @@ ON COLUMN "system_tenant"."contact_mobile" IS '联系手机';
 COMMENT
 ON COLUMN "system_tenant"."status" IS '租户状态（0正常 1停用）';
 COMMENT
-ON COLUMN "system_tenant"."domain" IS '绑定域名';
+ON COLUMN "system_tenant"."website" IS '绑定域名';
 COMMENT
 ON COLUMN "system_tenant"."package_id" IS '租户套餐编号';
 COMMENT
@@ -6827,17 +6827,17 @@ ON TABLE "system_tenant" IS '租户表';
 -- Records of system_tenant
 -- ----------------------------
 BEGIN;
-INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "domain",
+INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "website",
                              "package_id", "expire_time", "account_count", "creator", "create_time", "updater",
                              "update_time", "deleted")
 VALUES (1, '芋道源码', NULL, '芋艿', '17321315478', 0, 'https://www.iocoder.cn', 0, '2099-02-19 17:14:16', 9999, '1',
         '2021-01-05 17:03:47', '1', '2022-02-23 12:15:11', 0);
-INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "domain",
+INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "website",
                              "package_id", "expire_time", "account_count", "creator", "create_time", "updater",
                              "update_time", "deleted")
 VALUES (121, '小租户', 110, '小王2', '15601691300', 0, 'http://www.iocoder.cn', 111, '2024-03-11 00:00:00', 20, '1',
         '2022-02-22 00:56:14', '1', '2022-03-19 18:37:20', 0);
-INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "domain",
+INSERT INTO "system_tenant" ("id", "name", "contact_user_id", "contact_name", "contact_mobile", "status", "website",
                              "package_id", "expire_time", "account_count", "creator", "create_time", "updater",
                              "update_time", "deleted")
 VALUES (122, '测试租户', 113, '芋道', '15601691300', 0, 'https://www.iocoder.cn', 111, '2022-04-30 00:00:00', 50, '1',

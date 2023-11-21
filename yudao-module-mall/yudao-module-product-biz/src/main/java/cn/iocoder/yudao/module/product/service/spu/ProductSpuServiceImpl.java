@@ -1,5 +1,6 @@
 package cn.iocoder.yudao.module.product.service.spu;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
@@ -15,7 +16,6 @@ import cn.iocoder.yudao.module.product.dal.mysql.spu.ProductSpuMapper;
 import cn.iocoder.yudao.module.product.enums.spu.ProductSpuStatusEnum;
 import cn.iocoder.yudao.module.product.service.brand.ProductBrandService;
 import cn.iocoder.yudao.module.product.service.category.ProductCategoryService;
-import cn.iocoder.yudao.module.product.service.property.ProductPropertyValueService;
 import cn.iocoder.yudao.module.product.service.sku.ProductSkuService;
 import com.google.common.collect.Maps;
 import org.springframework.context.annotation.Lazy;
@@ -51,9 +51,6 @@ public class ProductSpuServiceImpl implements ProductSpuService {
     private ProductBrandService brandService;
     @Resource
     private ProductCategoryService categoryService;
-    @Resource
-    @Lazy // 循环依赖，避免报错
-    private ProductPropertyValueService productPropertyValueService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -110,8 +107,9 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         spu.setMarketPrice(getMinValue(skus, ProductSkuCreateOrUpdateReqVO::getMarketPrice));
         // sku 单价最低的商品的成本价格
         spu.setCostPrice(getMinValue(skus, ProductSkuCreateOrUpdateReqVO::getCostPrice));
-        // sku 单价最低的商品的条形码
-        spu.setBarCode(getMinValue(skus, ProductSkuCreateOrUpdateReqVO::getBarCode));
+        // sku 单价最低的商品的条形码 TODO 芋艿：条形码字段，是不是可以删除
+        spu.setBarCode("");
+//        spu.setBarCode(getMinValue(skus, ProductSkuCreateOrUpdateReqVO::getBarCode));
         // skus 库存总数
         spu.setStock(getSumValue(skus, ProductSkuCreateOrUpdateReqVO::getStock, Integer::sum));
         // 若是 spu 已有状态则不处理
@@ -136,6 +134,27 @@ public class ProductSpuServiceImpl implements ProductSpuService {
         if (categoryService.getCategoryLevel(id) < CATEGORY_LEVEL) {
             throw exception(SPU_SAVE_FAIL_CATEGORY_LEVEL_ERROR);
         }
+    }
+
+    @Override
+    public List<ProductSpuDO> validateSpuList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        // 获得商品信息
+        List<ProductSpuDO> list = productSpuMapper.selectBatchIds(ids);
+        Map<Long, ProductSpuDO> spuMap = CollectionUtils.convertMap(list, ProductSpuDO::getId);
+        // 校验
+        ids.forEach(id -> {
+            ProductSpuDO spu = spuMap.get(id);
+            if (spu == null) {
+                throw exception(SPU_NOT_EXISTS);
+            }
+            if (!ProductSpuStatusEnum.isEnable(spu.getStatus())) {
+                throw exception(SPU_NOT_ENABLE, spu.getName());
+            }
+        });
+        return list;
     }
 
     @Override
@@ -169,12 +188,15 @@ public class ProductSpuServiceImpl implements ProductSpuService {
 
     @Override
     public List<ProductSpuDO> getSpuList(Collection<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return productSpuMapper.selectBatchIds(ids);
     }
 
     @Override
-    public List<ProductSpuDO> getSpuList() {
-        return productSpuMapper.selectList();
+    public List<ProductSpuDO> getSpuListByStatus(Integer status) {
+        return productSpuMapper.selectList(ProductSpuDO::getStatus, status);
     }
 
     @Override

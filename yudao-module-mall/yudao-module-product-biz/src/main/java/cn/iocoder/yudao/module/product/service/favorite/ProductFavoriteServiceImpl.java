@@ -1,6 +1,7 @@
 package cn.iocoder.yudao.module.product.service.favorite;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
+import cn.iocoder.yudao.module.product.controller.admin.favorite.vo.ProductFavoritePageReqVO;
 import cn.iocoder.yudao.module.product.controller.app.favorite.vo.AppFavoritePageReqVO;
 import cn.iocoder.yudao.module.product.convert.favorite.ProductFavoriteConvert;
 import cn.iocoder.yudao.module.product.dal.dataobject.favorite.ProductFavoriteDO;
@@ -10,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.Objects;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.product.enums.ErrorCodeConstants.FAVORITE_EXISTS;
@@ -31,7 +31,7 @@ public class ProductFavoriteServiceImpl implements ProductFavoriteService {
     @Override
     public Long createFavorite(Long userId, Long spuId) {
         ProductFavoriteDO favorite = productFavoriteMapper.selectByUserIdAndSpuId(userId, spuId);
-        if (Objects.nonNull(favorite)) {
+        if (favorite != null) {
             throw exception(FAVORITE_EXISTS);
         }
 
@@ -43,7 +43,7 @@ public class ProductFavoriteServiceImpl implements ProductFavoriteService {
     @Override
     public void deleteFavorite(Long userId, Long spuId) {
         ProductFavoriteDO favorite = productFavoriteMapper.selectByUserIdAndSpuId(userId, spuId);
-        if (Objects.isNull(favorite)) {
+        if (favorite == null) {
             throw exception(FAVORITE_NOT_EXISTS);
         }
 
@@ -56,8 +56,18 @@ public class ProductFavoriteServiceImpl implements ProductFavoriteService {
     }
 
     @Override
+    public PageResult<ProductFavoriteDO> getFavoritePage(@Valid ProductFavoritePageReqVO reqVO) {
+        return productFavoriteMapper.selectPageByUserId(reqVO);
+    }
+
+    @Override
     public ProductFavoriteDO getFavorite(Long userId, Long spuId) {
         return productFavoriteMapper.selectByUserIdAndSpuId(userId, spuId);
+    }
+
+    @Override
+    public Long getFavoriteCount(Long userId) {
+        return productFavoriteMapper.selectCountByUserId(userId);
     }
 
 }

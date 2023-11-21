@@ -1,14 +1,12 @@
 package cn.iocoder.yudao.module.system.service.sms;
 
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
-import cn.iocoder.yudao.framework.common.exception.enums.GlobalErrorCodeConstants;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.collection.ArrayUtils;
 import cn.iocoder.yudao.framework.common.util.object.ObjectUtils;
 import cn.iocoder.yudao.framework.sms.core.client.SmsClient;
-import cn.iocoder.yudao.framework.sms.core.client.SmsClientFactory;
-import cn.iocoder.yudao.framework.sms.core.client.SmsCommonResult;
 import cn.iocoder.yudao.framework.sms.core.client.dto.SmsTemplateRespDTO;
+import cn.iocoder.yudao.framework.sms.core.enums.SmsTemplateAuditStatusEnum;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateExportReqVO;
@@ -36,7 +34,7 @@ import static cn.iocoder.yudao.framework.test.core.util.RandomUtils.*;
 import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @Import(SmsTemplateServiceImpl.class)
 public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
@@ -49,8 +47,6 @@ public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
 
     @MockBean
     private SmsChannelService smsChannelService;
-    @MockBean
-    private SmsClientFactory smsClientFactory;
     @MockBean
     private SmsClient smsClient;
 
@@ -68,7 +64,7 @@ public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testCreateSmsTemplate_success() {
+    public void testCreateSmsTemplate_success() throws Throwable {
         // 准备参数
         SmsTemplateCreateReqVO reqVO = randomPojo(SmsTemplateCreateReqVO.class, o -> {
             o.setContent("正在进行登录操作{operation}，您的验证码是{code}");
@@ -82,9 +78,9 @@ public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
         });
         when(smsChannelService.getSmsChannel(eq(channelDO.getId()))).thenReturn(channelDO);
         // mock 获得 API 短信模板成功
-        when(smsClientFactory.getSmsClient(eq(reqVO.getChannelId()))).thenReturn(smsClient);
-        when(smsClient.getSmsTemplate(eq(reqVO.getApiTemplateId()))).thenReturn(randomPojo(SmsCommonResult.class, SmsTemplateRespDTO.class,
-                o -> o.setCode(GlobalErrorCodeConstants.SUCCESS.getCode())));
+        when(smsChannelService.getSmsClient(eq(reqVO.getChannelId()))).thenReturn(smsClient);
+        when(smsClient.getSmsTemplate(eq(reqVO.getApiTemplateId()))).thenReturn(
+                randomPojo(SmsTemplateRespDTO.class, o -> o.setAuditStatus(SmsTemplateAuditStatusEnum.SUCCESS.getStatus())));
 
         // 调用
         Long smsTemplateId = smsTemplateService.createSmsTemplate(reqVO);
@@ -99,7 +95,7 @@ public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testUpdateSmsTemplate_success() {
+    public void testUpdateSmsTemplate_success() throws Throwable {
         // mock 数据
         SmsTemplateDO dbSmsTemplate = randomSmsTemplateDO();
         smsTemplateMapper.insert(dbSmsTemplate);// @Sql: 先插入出一条存在的数据
@@ -117,9 +113,9 @@ public class SmsTemplateServiceImplTest extends BaseDbUnitTest {
         });
         when(smsChannelService.getSmsChannel(eq(channelDO.getId()))).thenReturn(channelDO);
         // mock 获得 API 短信模板成功
-        when(smsClientFactory.getSmsClient(eq(reqVO.getChannelId()))).thenReturn(smsClient);
-        when(smsClient.getSmsTemplate(eq(reqVO.getApiTemplateId()))).thenReturn(randomPojo(SmsCommonResult.class, SmsTemplateRespDTO.class,
-                o -> o.setCode(GlobalErrorCodeConstants.SUCCESS.getCode())));
+        when(smsChannelService.getSmsClient(eq(reqVO.getChannelId()))).thenReturn(smsClient);
+        when(smsClient.getSmsTemplate(eq(reqVO.getApiTemplateId()))).thenReturn(
+                randomPojo(SmsTemplateRespDTO.class, o -> o.setAuditStatus(SmsTemplateAuditStatusEnum.SUCCESS.getStatus())));
 
         // 调用
         smsTemplateService.updateSmsTemplate(reqVO);

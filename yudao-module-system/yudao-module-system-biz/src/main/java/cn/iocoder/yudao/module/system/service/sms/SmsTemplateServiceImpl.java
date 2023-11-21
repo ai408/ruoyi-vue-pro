@@ -1,13 +1,14 @@
 package cn.iocoder.yudao.module.system.service.sms;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.CommonStatusEnum;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.sms.core.client.SmsClient;
-import cn.iocoder.yudao.framework.sms.core.client.SmsClientFactory;
-import cn.iocoder.yudao.framework.sms.core.client.SmsCommonResult;
 import cn.iocoder.yudao.framework.sms.core.client.dto.SmsTemplateRespDTO;
+import cn.iocoder.yudao.framework.sms.core.enums.SmsTemplateAuditStatusEnum;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateCreateReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplateExportReqVO;
 import cn.iocoder.yudao.module.system.controller.admin.sms.vo.template.SmsTemplatePageReqVO;
@@ -22,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -53,9 +53,6 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
 
     @Resource
     private SmsChannelService smsChannelService;
-
-    @Resource
-    private SmsClientFactory smsClientFactory;
 
     @Override
     public Long createSmsTemplate(SmsTemplateCreateReqVO createReqVO) {
@@ -144,7 +141,7 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
         if (channelDO == null) {
             throw exception(SMS_CHANNEL_NOT_EXISTS);
         }
-        if (!Objects.equals(channelDO.getStatus(), CommonStatusEnum.ENABLE.getStatus())) {
+        if (CommonStatusEnum.isDisable(channelDO.getStatus())) {
             throw exception(SMS_CHANNEL_DISABLE);
         }
         return channelDO;
@@ -174,11 +171,26 @@ public class SmsTemplateServiceImpl implements SmsTemplateService {
     @VisibleForTesting
     void validateApiTemplate(Long channelId, String apiTemplateId) {
         // 获得短信模板
-        SmsClient smsClient = smsClientFactory.getSmsClient(channelId);
+        SmsClient smsClient = smsChannelService.getSmsClient(channelId);
         Assert.notNull(smsClient, String.format("短信客户端(%d) 不存在", channelId));
-        SmsCommonResult<SmsTemplateRespDTO> templateResult = smsClient.getSmsTemplate(apiTemplateId);
-        // 校验短信模板是否正确
-        templateResult.checkError();
+        SmsTemplateRespDTO template;
+        try {
+            template = smsClient.getSmsTemplate(apiTemplateId);
+        } catch (Throwable ex) {
+            throw exception(SMS_TEMPLATE_API_ERROR, ExceptionUtil.getRootCauseMessage(ex));
+        }
+        // 校验短信模版
+        if (template == null) {
+            throw exception(SMS_TEMPLATE_API_NOT_FOUND);
+        }
+        if (Objects.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.CHECKING.getStatus())) {
+            throw exception(SMS_TEMPLATE_API_AUDIT_CHECKING);
+        }
+        if (Objects.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.FAIL.getStatus())) {
+            throw exception(SMS_TEMPLATE_API_AUDIT_FAIL, template.getAuditReason());
+        }
+        Assert.equals(template.getAuditStatus(), SmsTemplateAuditStatusEnum.SUCCESS.getStatus(),
+                String.format("短信模板(%s) 审核状态(%d) 不正确", apiTemplateId, template.getAuditStatus()));
     }
 
     @Override

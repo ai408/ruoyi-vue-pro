@@ -2,9 +2,15 @@ package cn.iocoder.yudao.module.trade.dal.dataobject.order;
 
 import cn.iocoder.yudao.framework.common.enums.TerminalEnum;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
+import cn.iocoder.yudao.module.member.api.user.dto.MemberUserRespDTO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.brokerage.BrokerageUserDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryExpressDO;
 import cn.iocoder.yudao.module.trade.dal.dataobject.delivery.DeliveryPickUpStoreDO;
 import cn.iocoder.yudao.module.trade.enums.delivery.DeliveryTypeEnum;
-import cn.iocoder.yudao.module.trade.enums.order.*;
+import cn.iocoder.yudao.module.trade.enums.order.TradeOrderCancelTypeEnum;
+import cn.iocoder.yudao.module.trade.enums.order.TradeOrderRefundStatusEnum;
+import cn.iocoder.yudao.module.trade.enums.order.TradeOrderStatusEnum;
+import cn.iocoder.yudao.module.trade.enums.order.TradeOrderTypeEnum;
 import com.baomidou.mybatisplus.annotation.KeySequence;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
@@ -25,6 +31,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TradeOrderDO extends BaseDO {
+
+    /**
+     * 发货物流公司编号 - 空（无需发货）
+     */
+    public static final Long LOGISTICS_ID_NULL = 0L;
 
     // ========== 订单基本信息 ==========
     /**
@@ -99,6 +110,13 @@ public class TradeOrderDO extends BaseDO {
      */
     private Boolean commentStatus;
 
+    /**
+     * 推广人编号
+     *
+     * 关联 {@link BrokerageUserDO#getId()} 字段，即 {@link MemberUserRespDTO#getId()} 字段
+     */
+    private Long brokerageUserId;
+
     // ========== 价格 + 支付基本信息 ==========
 
     // 价格文档 - 淘宝：https://open.taobao.com/docV3.htm?docId=108471&docType=1
@@ -162,6 +180,7 @@ public class TradeOrderDO extends BaseDO {
      * - {@link #discountPrice}
      * + {@link #deliveryPrice}
      * + {@link #adjustPrice}
+     * - {@link #vipPrice}
      */
     private Integer payPrice;
 
@@ -174,18 +193,18 @@ public class TradeOrderDO extends BaseDO {
     private Integer deliveryType;
     /**
      * 发货物流公司编号
+     *
+     * 如果无需发货，则 logisticsId 设置为 0。原因是，不想再添加额外字段
+     *
+     * 关联 {@link DeliveryExpressDO#getId()}
      */
     private Long logisticsId;
     /**
      * 发货物流单号
+     *
+     * 如果无需发货，则 logisticsNo 设置 ""。原因是，不想再添加额外字段
      */
     private String logisticsNo;
-    /**
-     * 发货状态
-     *
-     * 枚举 {@link TradeOrderDeliveryStatusEnum}
-     */
-    private Integer deliveryStatus;
     /**
      * 发货时间
      */
@@ -218,6 +237,10 @@ public class TradeOrderDO extends BaseDO {
      * 关联 {@link DeliveryPickUpStoreDO#getId()}
      */
     private Long pickUpStoreId;
+    /**
+     * 自提核销码
+     */
+    private String pickUpVerifyCode;
 
     // ========== 售后基本信息 ==========
     /**
@@ -245,12 +268,66 @@ public class TradeOrderDO extends BaseDO {
      * 对应 taobao 的 trade.coupon_fee 字段
      */
     private Integer couponPrice;
-    // TODO 芋艿：需要记录使用的积分；
+    /**
+     * 使用的积分
+     */
+    private Integer usePoint;
     /**
      * 积分抵扣的金额，单位：分
      *
      * 对应 taobao 的 trade.point_fee 字段
      */
     private Integer pointPrice;
+    /**
+     * 赠送的积分
+     */
+    private Integer givePoint;
+    /**
+     * 退还的使用的积分
+     */
+    private Integer refundPoint;
+    /**
+     * VIP 减免金额，单位：分
+     */
+    private Integer vipPrice;
+
+    /**
+     * 秒杀活动编号
+     *
+     * 关联 SeckillActivityDO 的 id 字段
+     */
+    private Long seckillActivityId;
+
+    /**
+     * 砍价活动编号
+     *
+     * 关联 BargainActivityDO 的 id 字段
+     */
+    private Long bargainActivityId;
+    /**
+     * 砍价记录编号
+     *
+     * 关联 BargainRecordDO 的 id 字段
+     */
+    private Long bargainRecordId;
+
+    /**
+     * 拼团活动编号
+     *
+     * 关联 CombinationActivityDO 的 id 字段
+     */
+    private Long combinationActivityId;
+    /**
+     * 拼团团长编号
+     *
+     * 关联 CombinationRecordDO 的 headId 字段
+     */
+    private Long combinationHeadId;
+    /**
+     * 拼团记录编号
+     *
+     * 关联 CombinationRecordDO 的 id 字段
+     */
+    private Long combinationRecordId;
 
 }

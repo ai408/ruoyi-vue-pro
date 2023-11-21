@@ -1,17 +1,18 @@
 package cn.iocoder.yudao.module.promotion.controller.admin.combination;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.common.util.collection.CollectionUtils;
-import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
-import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.module.product.api.spu.ProductSpuApi;
 import cn.iocoder.yudao.module.product.api.spu.dto.ProductSpuRespDTO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.*;
 import cn.iocoder.yudao.module.promotion.convert.combination.CombinationActivityConvert;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationActivityDO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationProductDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationActivityDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationProductDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationRecordDO;
+import cn.iocoder.yudao.module.promotion.enums.combination.CombinationRecordStatusEnum;
 import cn.iocoder.yudao.module.promotion.service.combination.CombinationActivityService;
+import cn.iocoder.yudao.module.promotion.service.combination.CombinationRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,16 +21,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static cn.hutool.core.collection.CollectionUtil.newArrayList;
 import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
-import static cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum.EXPORT;
+import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 
 @Tag(name = "管理后台 - 拼团活动")
 @RestController
@@ -40,7 +39,10 @@ public class CombinationActivityController {
     @Resource
     private CombinationActivityService combinationActivityService;
     @Resource
-    private ProductSpuApi spuApi;
+    private CombinationRecordService combinationRecordService;
+
+    @Resource
+    private ProductSpuApi productSpuApi;
 
     @PostMapping("/create")
     @Operation(summary = "创建拼团活动")
@@ -54,6 +56,15 @@ public class CombinationActivityController {
     @PreAuthorize("@ss.hasPermission('promotion:combination-activity:update')")
     public CommonResult<Boolean> updateCombinationActivity(@Valid @RequestBody CombinationActivityUpdateReqVO updateReqVO) {
         combinationActivityService.updateCombinationActivity(updateReqVO);
+        return success(true);
+    }
+
+    @PutMapping("/close")
+    @Operation(summary = "关闭拼团活动")
+    @Parameter(name = "id", description = "编号", required = true)
+    @PreAuthorize("@ss.hasPermission('promotion:combination-activity:close')")
+    public CommonResult<Boolean> closeSeckillActivity(@RequestParam("id") Long id) {
+        combinationActivityService.closeCombinationActivityById(id);
         return success(true);
     }
 
@@ -72,43 +83,36 @@ public class CombinationActivityController {
     @PreAuthorize("@ss.hasPermission('promotion:combination-activity:query')")
     public CommonResult<CombinationActivityRespVO> getCombinationActivity(@RequestParam("id") Long id) {
         CombinationActivityDO activity = combinationActivityService.getCombinationActivity(id);
-        List<CombinationProductDO> products = combinationActivityService.getProductsByActivityIds(newArrayList(id));
+        List<CombinationProductDO> products = combinationActivityService.getCombinationProductListByActivityIds(newArrayList(id));
         return success(CombinationActivityConvert.INSTANCE.convert(activity, products));
-    }
-
-    @GetMapping("/list")
-    @Operation(summary = "获得拼团活动列表")
-    @Parameter(name = "ids", description = "编号列表", required = true, example = "1024,2048")
-    @PreAuthorize("@ss.hasPermission('promotion:combination-activity:query')")
-    public CommonResult<List<CombinationActivityRespVO>> getCombinationActivityList(@RequestParam("ids") Collection<Long> ids) {
-        List<CombinationActivityDO> list = combinationActivityService.getCombinationActivityList(ids);
-        return success(CombinationActivityConvert.INSTANCE.convertList(list));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得拼团活动分页")
     @PreAuthorize("@ss.hasPermission('promotion:combination-activity:query')")
-    public CommonResult<PageResult<CombinationActivityRespVO>> getCombinationActivityPage(
+    public CommonResult<PageResult<CombinationActivityPageItemRespVO>> getCombinationActivityPage(
             @Valid CombinationActivityPageReqVO pageVO) {
+        // 查询拼团活动
         PageResult<CombinationActivityDO> pageResult = combinationActivityService.getCombinationActivityPage(pageVO);
-        // TODO @puhui999：可以不一定 aIds，直接批量查询结果出来；下面也是类似；
-        Set<Long> aIds = CollectionUtils.convertSet(pageResult.getList(), CombinationActivityDO::getId);
-        List<CombinationProductDO> products = combinationActivityService.getProductsByActivityIds(aIds);
-        Set<Long> spuIds = CollectionUtils.convertSet(pageResult.getList(), CombinationActivityDO::getSpuId);
-        List<ProductSpuRespDTO> spus = spuApi.getSpuList(spuIds);
-        return success(CombinationActivityConvert.INSTANCE.convertPage(pageResult, products, spus));
-    }
+        if (CollUtil.isEmpty(pageResult.getList())) {
+            return success(PageResult.empty(pageResult.getTotal()));
+        }
 
-    @GetMapping("/export-excel")
-    @Operation(summary = "导出拼团活动 Excel")
-    @PreAuthorize("@ss.hasPermission('promotion:combination-activity:export')")
-    @OperateLog(type = EXPORT)
-    public void exportCombinationActivityExcel(@Valid CombinationActivityExportReqVO exportReqVO,
-                                               HttpServletResponse response) throws IOException {
-        List<CombinationActivityDO> list = combinationActivityService.getCombinationActivityList(exportReqVO);
-        // 导出 Excel
-        List<CombinationActivityExcelVO> datas = CombinationActivityConvert.INSTANCE.convertList02(list);
-        ExcelUtils.write(response, "拼团活动.xls", "数据", CombinationActivityExcelVO.class, datas);
+        // 统计数据
+        Set<Long> activityIds = convertSet(pageResult.getList(), CombinationActivityDO::getId);
+        Map<Long, Integer> groupCountMap = combinationRecordService.getCombinationRecordCountMapByActivity(
+                activityIds, null, CombinationRecordDO.HEAD_ID_GROUP);
+        Map<Long, Integer> groupSuccessCountMap = combinationRecordService.getCombinationRecordCountMapByActivity(
+                activityIds, CombinationRecordStatusEnum.SUCCESS.getStatus(), CombinationRecordDO.HEAD_ID_GROUP);
+        Map<Long, Integer> recordCountMap = combinationRecordService.getCombinationRecordCountMapByActivity(
+                activityIds, null, null);
+        // 拼接数据
+        List<CombinationProductDO> products = combinationActivityService.getCombinationProductListByActivityIds(
+                convertSet(pageResult.getList(), CombinationActivityDO::getId));
+        List<ProductSpuRespDTO> spus = productSpuApi.getSpuList(
+                convertSet(pageResult.getList(), CombinationActivityDO::getSpuId));
+        return success(CombinationActivityConvert.INSTANCE.convertPage(pageResult, products,
+                groupCountMap, groupSuccessCountMap, recordCountMap, spus));
     }
 
 }

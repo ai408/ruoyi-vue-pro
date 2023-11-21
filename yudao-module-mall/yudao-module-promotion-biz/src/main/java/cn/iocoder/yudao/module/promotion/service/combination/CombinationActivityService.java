@@ -1,17 +1,17 @@
 package cn.iocoder.yudao.module.promotion.service.combination;
 
+import cn.iocoder.yudao.framework.common.pojo.PageParam;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.module.promotion.api.combination.dto.CombinationRecordReqDTO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityCreateReqVO;
-import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityExportReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityPageReqVO;
 import cn.iocoder.yudao.module.promotion.controller.admin.combination.vo.activity.CombinationActivityUpdateReqVO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationActivityDO;
-import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.combinationactivity.CombinationProductDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationActivityDO;
+import cn.iocoder.yudao.module.promotion.dal.dataobject.combination.CombinationProductDO;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,11 +37,26 @@ public interface CombinationActivityService {
     void updateCombinationActivity(@Valid CombinationActivityUpdateReqVO updateReqVO);
 
     /**
+     * 关闭拼团活动
+     *
+     * @param id 拼团活动编号
+     */
+    void closeCombinationActivityById(Long id);
+
+    /**
      * 删除拼团活动
      *
      * @param id 编号
      */
     void deleteCombinationActivity(Long id);
+
+    /**
+     * 校验拼团活动是否存在
+     *
+     * @param id 编号
+     * @return 拼团活动
+     */
+    CombinationActivityDO validateCombinationActivityExists(Long id);
 
     /**
      * 获得拼团活动
@@ -52,14 +67,6 @@ public interface CombinationActivityService {
     CombinationActivityDO getCombinationActivity(Long id);
 
     /**
-     * 获得拼团活动列表
-     *
-     * @param ids 编号
-     * @return 拼团活动列表
-     */
-    List<CombinationActivityDO> getCombinationActivityList(Collection<Long> ids);
-
-    /**
      * 获得拼团活动分页
      *
      * @param pageReqVO 分页查询
@@ -68,56 +75,64 @@ public interface CombinationActivityService {
     PageResult<CombinationActivityDO> getCombinationActivityPage(CombinationActivityPageReqVO pageReqVO);
 
     /**
-     * 获得拼团活动列表, 用于 Excel 导出
+     * 获得拼团活动商品列表
      *
-     * @param exportReqVO 查询条件
-     * @return 拼团活动列表
+     * @param activityId 拼团活动 id
+     * @return 拼团活动的商品列表
      */
-    List<CombinationActivityDO> getCombinationActivityList(CombinationActivityExportReqVO exportReqVO);
+    default List<CombinationProductDO> getCombinationProductsByActivityId(Long activityId) {
+        return getCombinationProductListByActivityIds(Collections.singletonList(activityId));
+    }
 
     /**
      * 获得拼团活动商品列表
      *
-     * @param ids 拼团活动 ids
+     * @param activityIds 拼团活动 ids
      * @return 拼团活动的商品列表
      */
-    List<CombinationProductDO> getProductsByActivityIds(Collection<Long> ids);
-
-    // TODO @puhui999：拆一个 CombinationRecordService 里，方法名可以简洁成 updateRecordStatusByOrderId；service 方法可以稍微简单一点，如果是 update 方法
-    /**
-     * 更新拼团状态
-     *
-     * @param userId  用户编号
-     * @param orderId 订单编号
-     * @param status  状态
-     */
-    void updateRecordStatusByUserIdAndOrderId(Long userId, Long orderId, Integer status);
+    List<CombinationProductDO> getCombinationProductListByActivityIds(Collection<Long> activityIds);
 
     /**
-     * 更新拼团状态和开始时间
+     * 获得拼团活动列表
      *
-     * @param userId    用户编号
-     * @param orderId   订单编号
-     * @param status    状态
-     * @param startTime 开始时间
+     * @param ids 拼团活动 ids
+     * @return 拼团活动的列表
      */
-    void updateRecordStatusAndStartTimeByUserIdAndOrderId(Long userId, Long orderId, Integer status, LocalDateTime startTime);
-
-    // TODO @puhui999：拆一个 CombinationRecordService 里
-    /**
-     * 创建拼团记录
-     *
-     * @param reqDTO 创建信息
-     */
-    void createRecord(CombinationRecordReqDTO reqDTO);
+    List<CombinationActivityDO> getCombinationActivityListByIds(Collection<Long> ids);
 
     /**
-     * 获得拼团状态
+     * 获取正在进行的活动分页数据
      *
-     * @param userId  用户编号
-     * @param orderId 订单编号
-     * @return 拼团状态
+     * @param count 需要的数量
+     * @return 拼团活动分页
      */
-    boolean validateRecordStatusIsSuccess(Long userId, Long orderId);
+    List<CombinationActivityDO> getCombinationActivityListByCount(Integer count);
+
+    /**
+     * 获取正在进行的活动分页数据
+     *
+     * @param pageParam 分页请求
+     * @return 拼团活动分页
+     */
+    PageResult<CombinationActivityDO> getCombinationActivityPage(PageParam pageParam);
+
+    /**
+     * 获取指定活动、指定 sku 编号的商品
+     *
+     * @param activityId 活动编号
+     * @param skuId      sku 编号
+     * @return 活动商品信息
+     */
+    CombinationProductDO selectByActivityIdAndSkuId(Long activityId, Long skuId);
+
+    /**
+     * 获取指定 spu 编号最近参加的活动，每个 spuId 只返回一条记录
+     *
+     * @param spuIds   spu 编号
+     * @param status   状态
+     * @param dateTime 日期时间
+     * @return 拼团活动列表
+     */
+    List<CombinationActivityDO> getCombinationActivityBySpuIdsAndStatusAndDateTimeLt(Collection<Long> spuIds, Integer status, LocalDateTime dateTime);
 
 }

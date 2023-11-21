@@ -2,8 +2,8 @@ package cn.iocoder.yudao.module.trade.dal.dataobject.order;
 
 import cn.iocoder.yudao.framework.common.util.json.JsonUtils;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
-import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.TradeAfterSaleDO;
-import cn.iocoder.yudao.module.trade.dal.dataobject.cart.TradeCartDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.aftersale.AfterSaleDO;
+import cn.iocoder.yudao.module.trade.dal.dataobject.cart.CartDO;
 import cn.iocoder.yudao.module.trade.enums.order.TradeOrderItemAfterSaleStatusEnum;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -46,7 +46,7 @@ public class TradeOrderItemDO extends BaseDO {
     /**
      * 购物车项编号
      *
-     * 关联 {@link TradeCartDO#getId()}
+     * 关联 {@link CartDO#getId()}
      */
     private Long cartId;
 
@@ -126,6 +126,7 @@ public class TradeOrderItemDO extends BaseDO {
      * - {@link #discountPrice}
      * + {@link #deliveryPrice}
      * + {@link #adjustPrice}
+     * - {@link #vipPrice}
      */
     private Integer payPrice;
 
@@ -143,14 +144,35 @@ public class TradeOrderItemDO extends BaseDO {
      * 对应 taobao 的 trade.point_fee 字段
      */
     private Integer pointPrice;
+    /**
+     * 使用的积分
+     *
+     * 目的：用于后续取消或者售后订单时，需要归还赠送
+     */
+    private Integer usePoint;
+    /**
+     * 赠送的积分
+     *
+     * 目的：用于后续取消或者售后订单时，需要扣减赠送
+     */
+    private Integer givePoint;
+    /**
+     * VIP 减免金额，单位：分
+     */
+    private Integer vipPrice;
 
     // ========== 售后基本信息 ==========
+
+    /**
+     * 售后单编号
+     *
+     * 关联 {@link AfterSaleDO#getId()} 字段
+     */
+    private Long afterSaleId;
     /**
      * 售后状态
      *
      * 枚举 {@link TradeOrderItemAfterSaleStatusEnum}
-     *
-     * @see TradeAfterSaleDO
      */
     private Integer afterSaleStatus;
 

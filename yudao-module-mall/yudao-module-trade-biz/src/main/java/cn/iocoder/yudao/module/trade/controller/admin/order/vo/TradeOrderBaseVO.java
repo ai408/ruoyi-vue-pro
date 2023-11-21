@@ -6,9 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
-* 交易订单 Base VO，提供给添加、修改、详细的子 VO 使用
-* 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
-*/
+ * 交易订单 Base VO，提供给添加、修改、详细的子 VO 使用
+ * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
+ */
 @Data
 public class TradeOrderBaseVO {
 
@@ -87,6 +87,15 @@ public class TradeOrderBaseVO {
 
     // ========== 收件 + 物流基本信息 ==========
 
+    @Schema(description = "配送方式", example = "10")
+    private Integer deliveryType;
+
+    @Schema(description = "自提门店", example = "10")
+    private Long pickUpStoreId;
+
+    @Schema(description = "自提核销码", example = "10")
+    private Long pickUpVerifyCode;
+
     @Schema(description = "配送模板编号", example = "1024")
     private Long deliveryTemplateId;
 
@@ -95,9 +104,6 @@ public class TradeOrderBaseVO {
 
     @Schema(description = "发货物流单号", example = "1024")
     private String logisticsNo;
-
-    @Schema(description = "发货状态", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
-    private Integer deliveryStatus;
 
     @Schema(description = "发货时间")
     private LocalDateTime deliveryTime;
@@ -135,4 +141,11 @@ public class TradeOrderBaseVO {
 
     @Schema(description = "积分抵扣的金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer pointPrice;
+
+    @Schema(description = "VIP 减免金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "888")
+    private Integer vipPrice;
+
+    @Schema(description = "推广人编号", example = "1")
+    private Long brokerageUserId;
+
 }
