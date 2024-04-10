@@ -3,13 +3,15 @@ package cn.iocoder.yudao.module.crm.dal.mysql.business;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
-import cn.iocoder.yudao.module.crm.controller.admin.business.vo.CrmBusinessExportReqVO;
-import cn.iocoder.yudao.module.crm.controller.admin.business.vo.CrmBusinessPageReqVO;
+import cn.iocoder.yudao.framework.mybatis.core.query.MPJLambdaWrapperX;
+import cn.iocoder.yudao.module.crm.controller.admin.business.vo.business.CrmBusinessPageReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.business.CrmBusinessDO;
+import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+import cn.iocoder.yudao.module.crm.util.CrmPermissionUtils;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * 商机 Mapper
@@ -19,32 +21,40 @@ import java.util.List;
 @Mapper
 public interface CrmBusinessMapper extends BaseMapperX<CrmBusinessDO> {
 
-    default PageResult<CrmBusinessDO> selectPage(CrmBusinessPageReqVO reqVO, Collection<Long> ids) {
-        return selectPage(reqVO, new LambdaQueryWrapperX<CrmBusinessDO>()
-                .in(CrmBusinessDO::getId, ids)
-                .likeIfPresent(CrmBusinessDO::getName, reqVO.getName())
+    default int updateOwnerUserIdById(Long id, Long ownerUserId) {
+        return update(new LambdaUpdateWrapper<CrmBusinessDO>()
+                .eq(CrmBusinessDO::getId, id)
+                .set(CrmBusinessDO::getOwnerUserId, ownerUserId));
+    }
+
+    default PageResult<CrmBusinessDO> selectPageByCustomerId(CrmBusinessPageReqVO pageReqVO) {
+        return selectPage(pageReqVO, new LambdaQueryWrapperX<CrmBusinessDO>()
+                .eq(CrmBusinessDO::getCustomerId, pageReqVO.getCustomerId()) // 指定客户编号
+                .likeIfPresent(CrmBusinessDO::getName, pageReqVO.getName())
                 .orderByDesc(CrmBusinessDO::getId));
     }
 
-    // TODO @puhui999：selectList 噢；
-    default List<CrmBusinessDO> selectPage(CrmBusinessExportReqVO reqVO) {
-        return selectList(new LambdaQueryWrapperX<CrmBusinessDO>()
-                .likeIfPresent(CrmBusinessDO::getName, reqVO.getName())
-                .eqIfPresent(CrmBusinessDO::getStatusTypeId, reqVO.getStatusTypeId())
-                .eqIfPresent(CrmBusinessDO::getStatusId, reqVO.getStatusId())
-                .betweenIfPresent(CrmBusinessDO::getContactNextTime, reqVO.getContactNextTime())
-                .eqIfPresent(CrmBusinessDO::getCustomerId, reqVO.getCustomerId())
-                .betweenIfPresent(CrmBusinessDO::getDealTime, reqVO.getDealTime())
-                .eqIfPresent(CrmBusinessDO::getPrice, reqVO.getPrice())
-                .eqIfPresent(CrmBusinessDO::getDiscountPercent, reqVO.getDiscountPercent())
-                .eqIfPresent(CrmBusinessDO::getProductPrice, reqVO.getProductPrice())
-                .eqIfPresent(CrmBusinessDO::getRemark, reqVO.getRemark())
-                .betweenIfPresent(CrmBusinessDO::getCreateTime, reqVO.getCreateTime())
-                .eqIfPresent(CrmBusinessDO::getEndStatus, reqVO.getEndStatus())
-                .eqIfPresent(CrmBusinessDO::getEndRemark, reqVO.getEndRemark())
-                .betweenIfPresent(CrmBusinessDO::getContactLastTime, reqVO.getContactLastTime())
-                .eqIfPresent(CrmBusinessDO::getFollowUpStatus, reqVO.getFollowUpStatus())
+    default PageResult<CrmBusinessDO> selectPageByContactId(CrmBusinessPageReqVO pageReqVO, Collection<Long> businessIds) {
+        return selectPage(pageReqVO, new LambdaQueryWrapperX<CrmBusinessDO>()
+                .in(CrmBusinessDO::getId, businessIds) // 指定商机编号
+                .likeIfPresent(CrmBusinessDO::getName, pageReqVO.getName())
                 .orderByDesc(CrmBusinessDO::getId));
+    }
+
+    default PageResult<CrmBusinessDO> selectPage(CrmBusinessPageReqVO pageReqVO, Long userId) {
+        MPJLambdaWrapperX<CrmBusinessDO> query = new MPJLambdaWrapperX<>();
+        // 拼接数据权限的查询条件
+        CrmPermissionUtils.appendPermissionCondition(query, CrmBizTypeEnum.CRM_BUSINESS.getType(),
+                CrmBusinessDO::getId, userId, pageReqVO.getSceneType(), Boolean.FALSE);
+        // 拼接自身的查询条件
+        query.selectAll(CrmBusinessDO.class)
+                .likeIfPresent(CrmBusinessDO::getName, pageReqVO.getName())
+                .orderByDesc(CrmBusinessDO::getId);
+        return selectJoinPage(pageReqVO, CrmBusinessDO.class, query);
+    }
+
+    default Long selectCountByStatusTypeId(Long statusTypeId) {
+        return selectCount(CrmBusinessDO::getStatusTypeId, statusTypeId);
     }
 
 }

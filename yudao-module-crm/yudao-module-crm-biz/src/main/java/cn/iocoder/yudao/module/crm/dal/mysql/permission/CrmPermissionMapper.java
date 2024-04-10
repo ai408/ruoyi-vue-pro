@@ -29,22 +29,46 @@ public interface CrmPermissionMapper extends BaseMapperX<CrmPermissionDO> {
                 .eq(CrmPermissionDO::getBizId, bizId));
     }
 
+    default List<CrmPermissionDO> selectByBizTypeAndBizIds(Integer bizType, Collection<Long> bizIds) {
+        return selectList(new LambdaQueryWrapperX<CrmPermissionDO>()
+                .eq(CrmPermissionDO::getBizType, bizType)
+                .in(CrmPermissionDO::getBizId, bizIds));
+    }
+
     default List<CrmPermissionDO> selectListByBizTypeAndUserId(Integer bizType, Long userId) {
         return selectList(new LambdaQueryWrapperX<CrmPermissionDO>()
                 .eq(CrmPermissionDO::getBizType, bizType)
                 .eq(CrmPermissionDO::getUserId, userId));
     }
 
-    default List<CrmPermissionDO> selectListByBizTypeAndBizIdsAndLevel(Integer bizType, Collection<Long> bizIds, Integer level) {
+    default List<CrmPermissionDO> selectListByBizTypeAndBizIdAndLevel(Integer bizType, Long bizId, Integer level) {
         return selectList(new LambdaQueryWrapperX<CrmPermissionDO>()
                 .eq(CrmPermissionDO::getBizType, bizType)
-                .in(CrmPermissionDO::getBizId, bizIds)
+                .eq(CrmPermissionDO::getBizId, bizId)
                 .eq(CrmPermissionDO::getLevel, level));
     }
 
     default CrmPermissionDO selectByIdAndUserId(Long id, Long userId) {
-        return selectOne(new LambdaQueryWrapperX<CrmPermissionDO>()
-                .eq(CrmPermissionDO::getId, id).eq(CrmPermissionDO::getUserId, userId));
+        return selectOne(CrmPermissionDO::getId, id,
+                CrmPermissionDO::getUserId, userId);
+    }
+
+    default CrmPermissionDO selectByBizIdAndUserId(Long bizId, Long userId) {
+        return selectOne(CrmPermissionDO::getBizId, bizId,
+                CrmPermissionDO::getUserId, userId);
+    }
+
+    default int deletePermission(Integer bizType, Long bizId) {
+        return delete(new LambdaQueryWrapperX<CrmPermissionDO>()
+                .eq(CrmPermissionDO::getBizType, bizType)
+                .eq(CrmPermissionDO::getBizId, bizId));
+    }
+
+    default Long selectListByBiz(Collection<Integer> bizTypes, Collection<Long> bizIds, Collection<Long> userIds) {
+        return selectCount(new LambdaQueryWrapperX<CrmPermissionDO>()
+                .in(CrmPermissionDO::getBizType, bizTypes)
+                .in(CrmPermissionDO::getBizId, bizIds)
+                .in(CrmPermissionDO::getUserId, userIds));
     }
 
 }

@@ -3,7 +3,6 @@ package cn.iocoder.yudao.module.member.controller.app.auth;
 import cn.hutool.core.util.StrUtil;
 import cn.iocoder.yudao.framework.common.enums.UserTypeEnum;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
-import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
 import cn.iocoder.yudao.framework.security.config.SecurityProperties;
 import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.member.controller.app.auth.vo.*;
@@ -53,7 +52,8 @@ public class AppAuthController {
     @PermitAll
     @Operation(summary = "登出系统")
     public CommonResult<Boolean> logout(HttpServletRequest request) {
-        String token = SecurityFrameworkUtils.obtainAuthorization(request, securityProperties.getTokenHeader());
+        String token = SecurityFrameworkUtils.obtainAuthorization(request,
+                securityProperties.getTokenHeader(), securityProperties.getTokenParameter());
         if (StrUtil.isNotBlank(token)) {
             authService.logout(token);
         }
@@ -63,7 +63,6 @@ public class AppAuthController {
     @PostMapping("/refresh-token")
     @Operation(summary = "刷新令牌")
     @Parameter(name = "refreshToken", description = "刷新令牌", required = true)
-    @OperateLog(enable = false) // 避免 Post 请求被记录操作日志
     public CommonResult<AppAuthLoginRespVO> refreshToken(@RequestParam("refreshToken") String refreshToken) {
         return success(authService.refreshToken(refreshToken));
     }
@@ -72,9 +71,8 @@ public class AppAuthController {
 
     @PostMapping("/sms-login")
     @Operation(summary = "使用手机 + 验证码登录")
-    public CommonResult<AppAuthLoginRespVO> smsLogin(@RequestBody @Valid AppAuthSmsLoginReqVO reqVO,
-                                                     @RequestHeader Integer terminal) {
-        return success(authService.smsLogin(reqVO, terminal));
+    public CommonResult<AppAuthLoginRespVO> smsLogin(@RequestBody @Valid AppAuthSmsLoginReqVO reqVO) {
+        return success(authService.smsLogin(reqVO));
     }
 
     @PostMapping("/send-sms-code")

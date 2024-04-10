@@ -7,6 +7,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.template.TemplateConfig;
 import cn.hutool.extra.template.TemplateEngine;
 import cn.hutool.extra.template.engine.velocity.VelocityEngine;
+import cn.hutool.system.SystemUtil;
+import cn.iocoder.yudao.framework.apilog.core.annotations.ApiAccessLog;
+import cn.iocoder.yudao.framework.apilog.core.enums.OperateTypeEnum;
 import cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil;
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.framework.common.pojo.PageParam;
@@ -23,8 +26,6 @@ import cn.iocoder.yudao.framework.excel.core.util.ExcelUtils;
 import cn.iocoder.yudao.framework.mybatis.core.dataobject.BaseDO;
 import cn.iocoder.yudao.framework.mybatis.core.mapper.BaseMapperX;
 import cn.iocoder.yudao.framework.mybatis.core.query.LambdaQueryWrapperX;
-import cn.iocoder.yudao.framework.operatelog.core.annotations.OperateLog;
-import cn.iocoder.yudao.framework.operatelog.core.enums.OperateTypeEnum;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import cn.iocoder.yudao.module.infra.dal.dataobject.codegen.CodegenTableDO;
 import cn.iocoder.yudao.module.infra.enums.codegen.CodegenFrontTypeEnum;
@@ -35,6 +36,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -103,7 +105,19 @@ public class CodegenEngine {
             .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/index.vue"),
                     vueFilePath("views/${table.moduleName}/${table.businessName}/index.vue"))
             .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("api/api.js"),
-                    vueFilePath("api/${table.moduleName}/${classNameVar}.js"))
+                    vueFilePath("api/${table.moduleName}/${table.businessName}/index.js"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/form.vue"),
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/${simpleClassName}Form.vue"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/components/form_sub_normal.vue"),  // 特殊：主子表专属逻辑
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/components/${subSimpleClassName}Form.vue"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/components/form_sub_inner.vue"),  // 特殊：主子表专属逻辑
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/components/${subSimpleClassName}Form.vue"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/components/form_sub_erp.vue"),  // 特殊：主子表专属逻辑
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/components/${subSimpleClassName}Form.vue"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/components/list_sub_inner.vue"),  // 特殊：主子表专属逻辑
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/components/${subSimpleClassName}List.vue"))
+            .put(CodegenFrontTypeEnum.VUE2.getType(), vueTemplatePath("views/components/list_sub_erp.vue"),  // 特殊：主子表专属逻辑
+                    vueFilePath("views/${table.moduleName}/${table.businessName}/components/${subSimpleClassName}List.vue"))
             // Vue3 标准模版
             .put(CodegenFrontTypeEnum.VUE3.getType(), vue3TemplatePath("views/index.vue"),
                     vue3FilePath("views/${table.moduleName}/${table.businessName}/index.vue"))
@@ -145,6 +159,15 @@ public class CodegenEngine {
     private CodegenProperties codegenProperties;
 
     /**
+     * 是否使用 jakarta 包，用于解决 Spring Boot 2.X 和 3.X 的兼容性问题
+     *
+     * true  - 使用 jakarta.validation.constraints.*
+     * false - 使用 javax.validation.constraints.*
+     */
+    @Setter // 允许设置的原因，是因为单测需要手动改变
+    private Boolean jakartaEnable;
+
+    /**
      * 模板引擎，由 hutool 实现
      */
     private final TemplateEngine templateEngine;
@@ -158,6 +181,8 @@ public class CodegenEngine {
         TemplateConfig config = new TemplateConfig();
         config.setResourceMode(TemplateConfig.ResourceMode.CLASSPATH);
         this.templateEngine = new VelocityEngine(config);
+        // 设置 javaxEnable，按照是否使用 JDK17 来判断
+        this.jakartaEnable = SystemUtil.getJavaInfo().isJavaVersionAtLeast(1700); // 17.00 * 100
     }
 
     @PostConstruct
@@ -167,6 +192,7 @@ public class CodegenEngine {
         globalBindingMap.put("basePackage", codegenProperties.getBasePackage());
         globalBindingMap.put("baseFrameworkPackage", codegenProperties.getBasePackage()
                 + '.' + "framework"); // 用于后续获取测试类的 package 地址
+        globalBindingMap.put("jakartaPackage", jakartaEnable ? "jakarta" : "javax");
         // 全局 Java Bean
         globalBindingMap.put("CommonResultClassName", CommonResult.class.getName());
         globalBindingMap.put("PageResultClassName", PageResult.class.getName());
@@ -185,7 +211,7 @@ public class CodegenEngine {
         globalBindingMap.put("LocalDateTimeUtilsClassName", LocalDateTimeUtils.class.getName());
         globalBindingMap.put("ObjectUtilsClassName", ObjectUtils.class.getName());
         globalBindingMap.put("DictConvertClassName", DictConvert.class.getName());
-        globalBindingMap.put("OperateLogClassName", OperateLog.class.getName());
+        globalBindingMap.put("ApiAccessLogClassName", ApiAccessLog.class.getName());
         globalBindingMap.put("OperateTypeEnumClassName", OperateTypeEnum.class.getName());
         globalBindingMap.put("BeanUtils", BeanUtils.class.getName());
     }
@@ -284,6 +310,10 @@ public class CodegenEngine {
         // Vue 界面：去除多的 dateFormatter，只有一个的情况下，说明没使用到
         if (StrUtil.count(content, "dateFormatter") == 1) {
             content = StrUtils.removeLineContains(content, "dateFormatter");
+        }
+        // Vue2 界面：修正 $refs
+        if (StrUtil.count(content, "this.refs") >= 1) {
+            content = content.replace("this.refs", "this.$refs");
         }
         // Vue 界面：去除多的 dict 相关，只有一个的情况下，说明没使用到
         if (StrUtil.count(content, "getIntDictOptions") == 1) {
@@ -452,7 +482,7 @@ public class CodegenEngine {
     }
 
     private static String vueFilePath(String path) {
-        return "yudao-ui-${sceneEnum.basePackage}/" + // 顶级目录
+        return "yudao-ui-${sceneEnum.basePackage}-vue2/" + // 顶级目录
                 "src/" + path;
     }
 

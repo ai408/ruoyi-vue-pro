@@ -1,9 +1,9 @@
 package cn.iocoder.yudao.module.crm.controller.admin.customer;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
-import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.CrmCustomerPoolConfigRespVO;
-import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.CrmCustomerPoolConfigUpdateReqVO;
-import cn.iocoder.yudao.module.crm.convert.customer.CrmCustomerConvert;
+import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
+import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.poolconfig.CrmCustomerPoolConfigRespVO;
+import cn.iocoder.yudao.module.crm.controller.admin.customer.vo.poolconfig.CrmCustomerPoolConfigSaveReqVO;
 import cn.iocoder.yudao.module.crm.dal.dataobject.customer.CrmCustomerPoolConfigDO;
 import cn.iocoder.yudao.module.crm.service.customer.CrmCustomerPoolConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,16 +30,15 @@ public class CrmCustomerPoolConfigController {
     @Operation(summary = "获取客户公海规则设置")
     @PreAuthorize("@ss.hasPermission('crm:customer-pool-config:query')")
     public CommonResult<CrmCustomerPoolConfigRespVO> getCustomerPoolConfig() {
-        CrmCustomerPoolConfigDO customerPoolConfig = customerPoolConfigService.getCustomerPoolConfig();
-        return success(CrmCustomerConvert.INSTANCE.convert(customerPoolConfig));
+        CrmCustomerPoolConfigDO poolConfig = customerPoolConfigService.getCustomerPoolConfig();
+        return success(BeanUtils.toBean(poolConfig, CrmCustomerPoolConfigRespVO.class));
     }
 
-    // TODO @wanwan：这个请求，搞成 save 哈；
-    @PutMapping("/update")
+    @PutMapping("/save")
     @Operation(summary = "更新客户公海规则设置")
     @PreAuthorize("@ss.hasPermission('crm:customer-pool-config:update')")
-    public CommonResult<Boolean> updateCustomerPoolConfig(@Valid @RequestBody CrmCustomerPoolConfigUpdateReqVO updateReqVO) {
-        customerPoolConfigService.updateCustomerPoolConfig(updateReqVO);
+    public CommonResult<Boolean> saveCustomerPoolConfig(@Valid @RequestBody CrmCustomerPoolConfigSaveReqVO updateReqVO) {
+        customerPoolConfigService.saveCustomerPoolConfig(updateReqVO);
         return success(true);
     }
 

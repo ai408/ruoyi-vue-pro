@@ -1,9 +1,11 @@
 package cn.iocoder.yudao.module.crm.service.permission.bo;
 
 import cn.iocoder.yudao.framework.common.validation.InEnum;
-import cn.iocoder.yudao.module.crm.framework.enums.CrmBizTypeEnum;
-import cn.iocoder.yudao.module.crm.framework.enums.CrmPermissionLevelEnum;
+import cn.iocoder.yudao.module.crm.enums.common.CrmBizTypeEnum;
+import cn.iocoder.yudao.module.crm.enums.permission.CrmPermissionLevelEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
@@ -13,6 +15,8 @@ import javax.validation.constraints.NotNull;
  * @author HUIHUI
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CrmPermissionTransferReqBO {
 
     /**

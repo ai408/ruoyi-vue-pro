@@ -1,14 +1,12 @@
 package cn.iocoder.yudao.module.system.service.social;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.lang.Assert;
 import cn.iocoder.yudao.framework.common.exception.ServiceException;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserBindReqDTO;
 import cn.iocoder.yudao.module.system.api.social.dto.SocialUserRespDTO;
 import cn.iocoder.yudao.module.system.controller.admin.socail.vo.user.SocialUserPageReqVO;
-import cn.iocoder.yudao.module.system.convert.social.SocialUserConvert;
 import cn.iocoder.yudao.module.system.dal.dataobject.social.SocialUserBindDO;
 import cn.iocoder.yudao.module.system.dal.dataobject.social.SocialUserDO;
 import cn.iocoder.yudao.module.system.dal.mysql.social.SocialUserBindMapper;
@@ -22,14 +20,13 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.framework.common.util.collection.CollectionUtils.convertSet;
 import static cn.iocoder.yudao.framework.common.util.json.JsonUtils.toJsonString;
-import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.*;
+import static cn.iocoder.yudao.module.system.enums.ErrorCodeConstants.SOCIAL_USER_NOT_FOUND;
 
 /**
  * 社交用户 Service 实现类
@@ -61,7 +58,7 @@ public class SocialUserServiceImpl implements SocialUserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String bindSocialUser(SocialUserBindReqDTO reqDTO) {
         // 获得社交用户
         SocialUserDO socialUser = authSocialUser(reqDTO.getSocialType(), reqDTO.getUserType(),
@@ -96,21 +93,32 @@ public class SocialUserServiceImpl implements SocialUserService {
     }
 
     @Override
-    public SocialUserRespDTO getSocialUser(Integer userType, Integer socialType, String code, String state) {
+    public SocialUserRespDTO getSocialUserByUserId(Integer userType, Long userId, Integer socialType) {
+        // 获得绑定用户
+        SocialUserBindDO socialUserBind = socialUserBindMapper.selectByUserIdAndUserTypeAndSocialType(userId, userType, socialType);
+        if (socialUserBind == null) {
+            return null;
+        }
+        // 获得社交用户
+        SocialUserDO socialUser = socialUserMapper.selectById(socialUserBind.getSocialUserId());
+        Assert.notNull(socialUser, "社交用户不能为空");
+        return new SocialUserRespDTO(socialUser.getOpenid(), socialUser.getNickname(), socialUser.getAvatar(),
+                socialUserBind.getUserId());
+    }
+
+    @Override
+    public SocialUserRespDTO getSocialUserByCode(Integer userType, Integer socialType, String code, String state) {
         // 获得社交用户
         SocialUserDO socialUser = authSocialUser(socialType, userType, code, state);
         Assert.notNull(socialUser, "社交用户不能为空");
 
-        // 如果未绑定的社交用户，则无法自动登录，进行报错
+        // 获得绑定用户
         SocialUserBindDO socialUserBind = socialUserBindMapper.selectByUserTypeAndSocialUserId(userType,
                 socialUser.getId());
-        if (socialUserBind == null) {
-            throw exception(AUTH_THIRD_LOGIN_NOT_BIND);
-        }
-        return new SocialUserRespDTO(socialUser.getOpenid(), socialUserBind.getUserId());
+        return new SocialUserRespDTO(socialUser.getOpenid(), socialUser.getNickname(), socialUser.getAvatar(),
+                socialUserBind != null ? socialUserBind.getUserId() : null);
     }
 
-    // TODO 芋艿：调整下单测
     /**
      * 授权获得对应的社交用户
      * 如果授权失败，则会抛出 {@link ServiceException} 异常
